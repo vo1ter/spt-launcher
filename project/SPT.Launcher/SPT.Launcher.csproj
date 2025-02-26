@@ -23,13 +23,13 @@
     <Content Include="Assets\icon.ico" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Avalonia" Version="11.1.1" />
-    <PackageReference Include="Avalonia.Desktop" Version="11.1.1" />
+    <PackageReference Include="Avalonia" Version="11.2.4" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.4" />
     <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="0.10.12" />
-    <PackageReference Include="Avalonia.ReactiveUI" Version="11.1.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.1.1" />
-    <PackageReference Include="DialogHost.Avalonia" Version="0.8.0-avalonia11dot1-3" />
+    <PackageReference Condition="'$(Configuration)' == 'Debug'" Include="Avalonia.Diagnostics" Version="11.2.4" />
+    <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.4" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.4" />
+    <PackageReference Include="DialogHost.Avalonia" Version="0.9.2" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\SPT.ByteBanger\SPT.ByteBanger.csproj" />
@@ -47,5 +47,10 @@
     <AvaloniaXaml Update="Assets\Styles.axaml">
       <SubType>Designer</SubType>
     </AvaloniaXaml>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Update="CustomControls\OnlinePlayers.axaml.cs">
+      <DependentUpon>OnlinePlayers.axaml</DependentUpon>
+    </Compile>
   </ItemGroup>
 </Project>

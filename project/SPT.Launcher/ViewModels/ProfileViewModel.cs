@@ -2,6 +2,7 @@
 using SPT.Launcher.MiniCommon;
 using SPT.Launcher.Models;
 using SPT.Launcher.Models.Launcher;
+using SPT.Launcher.Controllers;
 using Avalonia;
 using ReactiveUI;
 using System.Threading.Tasks;
@@ -12,6 +13,8 @@ using System.Diagnostics;
 using System.IO;
 using Avalonia.Controls.ApplicationLifetimes;
 using SPT.Launcher.Models.SPT;
+using System.Linq;
+using SPT.Launcher.Models.Fika;
 
 namespace SPT.Launcher.ViewModels
 {
@@ -37,6 +40,27 @@ namespace SPT.Launcher.ViewModels
         {
             get => _ProfileWipePending;
             set => this.RaiseAndSetIfChanged(ref _ProfileWipePending, value);
+        }
+
+        private int _PlayersOnline;
+        public int PlayersOnline
+        {
+            get => _PlayersOnline;
+            set => this.RaiseAndSetIfChanged(ref _PlayersOnline, value);
+        }
+
+        private string _dediAvailabilityText;
+        public string DediAvailabilityText
+        {
+            get => _dediAvailabilityText;
+            set => this.RaiseAndSetIfChanged(ref _dediAvailabilityText, value);
+        }
+
+        private string _dediAvailabilityColor;
+        public string DediAvailabilityColor
+        {
+            get => _dediAvailabilityColor;
+            set => this.RaiseAndSetIfChanged(ref _dediAvailabilityColor, value);
         }
 
         public string CurrentId { get; set; }
@@ -66,6 +90,11 @@ namespace SPT.Launcher.ViewModels
             CurrentEdition = AccountManager.SelectedAccount.edition;
 
             CurrentId = AccountManager.SelectedAccount.id;
+
+            FikaDedicatedData dediData = FikaController.GetDedicatedData();
+            bool dediAvailability = dediData.Available ;
+            DediAvailabilityText = dediAvailability ? "Available" : "Not available";
+            DediAvailabilityColor = dediAvailability ? "Green" : "Red";
         }
 
         private async Task GameVersionCheck()
@@ -267,6 +296,21 @@ namespace SPT.Launcher.ViewModels
             }
         }
 
+        public async Task UpdateOnlinePlayersCommand()
+        {
+            FikaPlayer[] players = FikaController.GetOnlinePlayers();
+
+            if (players.Count() == 0)
+            {
+                SendNotification("Fika", "No players online");
+                return;
+            }
+
+            foreach (var player in players)
+            {
+                Debug.WriteLine(player.nickname);
+            }
+        }
         private void UpdateProfileInfo()
         {
             AccountManager.UpdateProfileInfo();

@@ -1,6 +1,7 @@
 ﻿using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Markup.Xaml;
 using SPT.Launcher.Models.Launcher;
 
 namespace SPT.Launcher.CustomControls;
@@ -82,5 +83,10 @@ public partial class ProfileCard : UserControl
     {
         get => GetValue(ChangeEditionCommandProperty);
         set => SetValue(ChangeEditionCommandProperty, value);
+    }
+
+    private void InitializeComponent()
+    {
+        AvaloniaXamlLoader.Load(this);
     }
 }
