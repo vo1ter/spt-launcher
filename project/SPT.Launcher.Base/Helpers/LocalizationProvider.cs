@@ -1148,6 +1148,16 @@ namespace SPT.Launcher.Helpers
         }
         #endregion
 
+        #region players_online
+        private string _players_online;
+
+        public string players_online
+        {
+            get => _players_online;
+            set => SetProperty(ref _players_online, value);
+        }
+        #endregion
+
         #region core_dll_file_version_mismatch
         private string _core_dll_file_version_mismatch;
 

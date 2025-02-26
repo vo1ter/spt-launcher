@@ -26,6 +26,17 @@
                           OpenModsInfoCommand="{Binding OpenModsInfoCommand}"
                           />
 
+		<!-- Players Online -->
+		<cc:OnlinePlayers Grid.Row="1" Grid.Column="3"
+						 UpdateOnlinePlayersCommand="{Binding UpdateOnlinePlayersCommand}"
+						 />
+
+		<!-- Dedicated status -->
+		<cc:DedicatedStatus Grid.Row="3" Grid.Column="3"
+							DediAvailabilityColor="{Binding DediAvailabilityColor}"
+							DediAvailabilityText="{Binding DediAvailabilityText}"
+							/>
+
         <!-- Game bar -->
         <cc:GameLaunchBar Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3"
                           ProfileInfo="{Binding ProfileInfo}"

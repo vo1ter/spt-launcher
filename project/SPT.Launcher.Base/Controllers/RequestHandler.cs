@@ -103,5 +103,15 @@ namespace SPT.Launcher
         {
             return request.GetJson("/launcher/server/serverModsUsedByProfile");
         }
+
+        public static string RequestOnlinePlayers() 
+        {
+            return request.GetJson("/fika/presence/get");
+        }
+
+        public static string RequestDedicatedClientStatus()
+        {
+            return request.GetJson("/fika/raid/dedicated/getstatus");
+        }
     }
 }

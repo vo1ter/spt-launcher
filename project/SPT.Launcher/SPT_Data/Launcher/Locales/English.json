@@ -99,5 +99,6 @@
   "core_dll_file_version_mismatch": "Your BepinEx/plugins/spt/spt-core.dll file version doesn't match what was expected and is unable to start. Try reinstalling SPT",
   "register_failed_name_limit": "name cannot exceed 15 characters",
   "copy_failed": "Failed to copy data to clipboard",
-  "copy_logs_to_clipboard": "Copy logs to clipboard"
+  "copy_logs_to_clipboard": "Copy logs to clipboard",
+  "players_online":  "Online players"
 }
