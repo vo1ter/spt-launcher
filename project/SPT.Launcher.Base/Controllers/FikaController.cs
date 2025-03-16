@@ -28,6 +28,8 @@ namespace SPT.Launcher.Controllers
             {
                 string json = RequestHandler.RequestDedicatedClientStatus();
 
+                // Debug.WriteLine("BULLSHIT" + json);
+
                 return Json.Deserialize<FikaDedicatedData>(json);
             }
             catch

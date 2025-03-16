@@ -15,6 +15,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using SPT.Launcher.Models.SPT;
 using System.Linq;
 using SPT.Launcher.Models.Fika;
+using Splat.ModeDetection;
 
 namespace SPT.Launcher.ViewModels
 {
@@ -75,10 +76,16 @@ namespace SPT.Launcher.ViewModels
 
         private readonly ProcessMonitor _monitor;
 
+        public enum EDedicatedStatus
+        {
+            READY = 1,
+            IN_RAID = 2,
+        }
+
         public ProfileViewModel(IScreen Host) : base(Host)
         {
             // cache and load side image if profile has a side
-            if(AccountManager.SelectedProfileInfo != null && AccountManager.SelectedProfileInfo.Side != null)
+            if (AccountManager.SelectedProfileInfo != null && AccountManager.SelectedProfileInfo.Side != null)
             {
                 ImageRequest.CacheSideImage(AccountManager.SelectedProfileInfo.Side);
                 SideImage.Path = AccountManager.SelectedProfileInfo.SideImage;
@@ -91,10 +98,20 @@ namespace SPT.Launcher.ViewModels
 
             CurrentId = AccountManager.SelectedAccount.id;
 
+            // Initialize dedicated server status
             FikaDedicatedData dediData = FikaController.GetDedicatedData();
-            bool dediAvailability = dediData.Available ;
-            DediAvailabilityText = dediAvailability ? "Available" : "Not available";
-            DediAvailabilityColor = dediAvailability ? "Green" : "Red";
+            DediAvailabilityText = dediData.Available == Models.Fika.EDedicatedStatus.READY ? "Available" : (dediData.Available == Models.Fika.EDedicatedStatus.IN_RAID ? "In Raid" : "Unavailable");
+            DediAvailabilityColor = dediData.Available == Models.Fika.EDedicatedStatus.READY ? "Green" : (dediData.Available == Models.Fika.EDedicatedStatus.IN_RAID ? "Orange" : "Red");
+
+            // Initialize player count
+            try
+            {
+                PlayersOnline = FikaController.GetOnlinePlayers().Length;
+            }
+            catch
+            {
+                PlayersOnline = 0;
+            }
         }
 
         private async Task GameVersionCheck()
@@ -111,9 +128,7 @@ namespace SPT.Launcher.ViewModels
             // if the compatible version isn't the same as the game version show a warning dialog
             if(compatibleGameVersion != gameVersion)
             {
-                WarningDialogViewModel warning = new WarningDialogViewModel(null,
-                                                     string.Format(LocalizationProvider.Instance.game_version_mismatch_format_2, gameVersion, compatibleGameVersion),
-                                                     LocalizationProvider.Instance.i_understand);
+                WarningDialogViewModel warning = new WarningDialogViewModel(null, string.Format(LocalizationProvider.Instance.game_version_mismatch_format_2, gameVersion, compatibleGameVersion), LocalizationProvider.Instance.i_understand);
                 Dispatcher.UIThread.InvokeAsync(async() =>
                 {
                     await ShowDialog(warning);
@@ -300,12 +315,18 @@ namespace SPT.Launcher.ViewModels
         {
             FikaPlayer[] players = FikaController.GetOnlinePlayers();
 
-            if (players.Count() == 0)
+            // Update the PlayersOnline property with the count
+            PlayersOnline = players.Length;
+
+            if (players.Length == 0)
             {
                 SendNotification("Fika", "No players online");
                 return;
             }
 
+            SendNotification("Fika", $"{PlayersOnline} {(PlayersOnline == 1 ? "player" : "players")} online");
+
+            // Debug output for each player (optional)
             foreach (var player in players)
             {
                 Debug.WriteLine(player.nickname);

@@ -8,38 +8,65 @@ using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Markup.Xaml;
 using SPT.Launcher.Controllers;
+using System.Reactive;
+using ReactiveUI;
 
 namespace SPT.Launcher.CustomControls;
 
 public partial class OnlinePlayers : UserControl
 {
+    // Dictionary and activity strings as class fields for reuse
+    private readonly string?[] activityStrings = { "in Menu", "in Raid", "in Stash", "in Hideout", "is Trading" };
+    private readonly Dictionary<string, string> maps = new Dictionary<string, string>
+    {
+        { "factory4_day", "Factory" },
+        { "factory4_night", "Factory" },
+        { "bigmap", "Customs" },
+        { "Interchange", "Interchange" },
+        { "RezervBase", "Reserve" },
+        { "Woods", "Woods" },
+        { "Shoreline", "Shoreline" },
+        { "TarkovStreets", "Streets of Tarkov" },
+        { "Sandbox", "Ground Zero" },
+        { "laboratory", "Laboratory" },
+        { "Lighthouse", "Lighthouse" }
+    };
+
     public OnlinePlayers()
     {
         InitializeComponent();
 
-        var players = FikaController.GetOnlinePlayers();
-        string?[] activityStrings = { "in Menu", "in Raid", "in Stash", "in Hideout", "is Trading" };
-        Dictionary<string, string> maps = new Dictionary<string, string>
+        // Initialize the command with the UpdatePlayersList method
+        UpdateOnlinePlayersCommand = ReactiveCommand.Create(UpdatePlayersList);
+
+        // Initial load of players
+        UpdatePlayersList();
+    }
+
+    public static readonly StyledProperty<ICommand> UpdateOnlinePlayersCommandProperty = AvaloniaProperty.Register<OnlinePlayers, ICommand>("UpdateOnlinePlayersCommand");
+
+    public ICommand UpdateOnlinePlayersCommand
+    {
+        get => GetValue(UpdateOnlinePlayersCommandProperty);
+        set => SetValue(UpdateOnlinePlayersCommandProperty, value);
+    }
+
+    private void UpdatePlayersList()
+    {
+        // Clear the existing list first
+        var stackPanel = this.FindControl<StackPanel>("onlinePlayersList");
+        if (stackPanel != null)
         {
-            { "factory4_day", "Factory" },
-            { "factory4_night", "Factory" },
-            { "bigmap", "Customs" },
-            { "Interchange", "Interchange" },
-            { "RezervBase", "Reserve" },
-            { "Woods", "Woods" },
-            { "Shoreline", "Shoreline" },
-            { "TarkovStreets", "Streets of Tarkov" },
-            { "Sandbox", "Ground Zero" },
-            { "laboratory", "Laboratory" },
-            { "Lighthouse", "Lighthouse" }
-        };
+            stackPanel.Children.Clear();
+        }
+
+        // Fetch the latest player data
+        var players = FikaController.GetOnlinePlayers();
 
         foreach (var player in players)
         {
             if (player != null)
             {
-                var stackPanel = this.FindControl<StackPanel>("onlinePlayersList");
-
                 var border = new Border
                 {
                     BorderBrush = Avalonia.Media.Brushes.Black,
@@ -54,9 +81,14 @@ public partial class OnlinePlayers : UserControl
                 verticalStack1.Children.Add(new Label { Content = "Player name" });
                 verticalStack1.Children.Add(new Label { Content = "Current activity:" });
 
-                string activityString = System.String.Format("{0}", activityStrings[player.activity]);
+                string activityString = String.Format("{0}", activityStrings[player.activity]);
 
-                if(player.activity == 1) activityString = System.String.Format("{0} on {1} as {2} for {3} mins", activityStrings[player.activity], maps[player.RaidInformation.location], player.RaidInformation.side, ((Int32)(DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds - player.activityStartedTimeStamp) / 60);
+                if (player.activity == 1)
+                    activityString = String.Format("{0} on {1} as {2} for {3} mins",
+                        activityStrings[player.activity],
+                        maps[player.RaidInformation.location],
+                        player.RaidInformation.side,
+                        ((Int32)(DateTime.Now.Subtract(new DateTime(1970, 1, 1))).TotalSeconds - player.activityStartedTimeStamp) / 60);
 
                 var verticalStack2 = new StackPanel { Orientation = Orientation.Vertical };
                 verticalStack2.Children.Add(new Label { Content = player.nickname });
@@ -67,18 +99,9 @@ public partial class OnlinePlayers : UserControl
 
                 border.Child = horizontalStack;
 
-                stackPanel.Children.Add(border);
+                stackPanel?.Children.Add(border);
             }
         }
-    }
-
-    public static readonly StyledProperty<ICommand> UpdateOnlinePlayersCommandProperty = AvaloniaProperty.Register<OnlinePlayers, ICommand>(
-        "UpdateOnlinePlayersCommand");
-
-    public ICommand UpdateOnlinePlayersCommand
-    {
-        get => GetValue(UpdateOnlinePlayersCommandProperty);
-        set => SetValue(UpdateOnlinePlayersCommandProperty, value);
     }
 
     private void InitializeComponent()
