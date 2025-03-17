@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
@@ -10,6 +11,7 @@ using Avalonia.Markup.Xaml;
 using SPT.Launcher.Controllers;
 using System.Reactive;
 using ReactiveUI;
+using SPT.Launcher.Models.Fika;
 
 namespace SPT.Launcher.CustomControls;
 
@@ -36,14 +38,19 @@ public partial class OnlinePlayers : UserControl
     {
         InitializeComponent();
 
-        // Initialize the command with the UpdatePlayersList method
-        UpdateOnlinePlayersCommand = ReactiveCommand.Create(UpdatePlayersList);
+        // Create a default command that updates the UI
+        UpdateOnlinePlayersCommand = ReactiveCommand.CreateFromTask(async () =>
+        {
+            // This will update the UI, but we want parent ViewModel to also 
+            // handle this and update PlayersOnline count
+            await UpdatePlayersList();
+        });
 
         // Initial load of players
         UpdatePlayersList();
     }
 
-    public static readonly StyledProperty<ICommand> UpdateOnlinePlayersCommandProperty = AvaloniaProperty.Register<OnlinePlayers, ICommand>("UpdateOnlinePlayersCommand");
+    public static readonly StyledProperty<ICommand> UpdateOnlinePlayersCommandProperty = AvaloniaProperty.Register<OnlinePlayers, ICommand>(nameof(UpdateOnlinePlayersCommand));
 
     public ICommand UpdateOnlinePlayersCommand
     {
@@ -51,7 +58,8 @@ public partial class OnlinePlayers : UserControl
         set => SetValue(UpdateOnlinePlayersCommandProperty, value);
     }
 
-    private void UpdatePlayersList()
+    // Modified to accept players parameter to avoid duplicate API calls
+    public Task UpdatePlayersList(FikaPlayer[]? players = null)
     {
         // Clear the existing list first
         var stackPanel = this.FindControl<StackPanel>("onlinePlayersList");
@@ -60,8 +68,11 @@ public partial class OnlinePlayers : UserControl
             stackPanel.Children.Clear();
         }
 
-        // Fetch the latest player data
-        var players = FikaController.GetOnlinePlayers();
+        // Use provided players or fetch if none provided
+        if (players == null)
+        {
+            players = FikaController.GetOnlinePlayers();
+        }
 
         foreach (var player in players)
         {
@@ -102,6 +113,8 @@ public partial class OnlinePlayers : UserControl
                 stackPanel?.Children.Add(border);
             }
         }
+
+        return Task.CompletedTask;
     }
 
     private void InitializeComponent()

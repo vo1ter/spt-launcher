@@ -3,7 +3,6 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Markup.Xaml;
-using MyApp;
 using SPT.Launcher.Controllers;
 using SPT.Launcher.Models.Fika;
 
@@ -11,7 +10,7 @@ namespace SPT.Launcher.CustomControls;
 
 public partial class DedicatedStatus : UserControl
 {
-    public static readonly StyledProperty<string> DediAvailabilityTextProperty = AvaloniaProperty.Register<OnlinePlayers, string>(
+    public static readonly StyledProperty<string> DediAvailabilityTextProperty = AvaloniaProperty.Register<DedicatedStatus, string>(
         "DediAvailabilityText");
 
     public string DediAvailabilityText
@@ -20,7 +19,7 @@ public partial class DedicatedStatus : UserControl
         set => SetValue(DediAvailabilityTextProperty, value);
     }
 
-    public static readonly StyledProperty<string> DediAvailabilityColorProperty = AvaloniaProperty.Register<OnlinePlayers, string>(
+    public static readonly StyledProperty<string> DediAvailabilityColorProperty = AvaloniaProperty.Register<DedicatedStatus, string>(
         "DediAvailabilityColor");
 
     public string DediAvailabilityColor
@@ -28,9 +27,29 @@ public partial class DedicatedStatus : UserControl
         get => GetValue(DediAvailabilityColorProperty);
         set => SetValue(DediAvailabilityColorProperty, value);
     }
+
+    public static readonly StyledProperty<ICommand> UpdateDedicatedStatusCommandProperty =
+        AvaloniaProperty.Register<DedicatedStatus, ICommand>(nameof(UpdateDedicatedStatusCommand));
+
+    public ICommand UpdateDedicatedStatusCommand
+    {
+        get => GetValue(UpdateDedicatedStatusCommandProperty);
+        set => SetValue(UpdateDedicatedStatusCommandProperty, value);
+    }
+
     public DedicatedStatus()
     {
         InitializeComponent();
+
+
+        // Initialize with current status if there are no bindings
+        if (string.IsNullOrEmpty(DediAvailabilityText))
+        {
+            var dediData = FikaController.GetDedicatedData();
+            bool isDediAvailable = dediData.Available != null;
+            DediAvailabilityText = isDediAvailable ? "Available" : "Unavailable";
+            DediAvailabilityColor = isDediAvailable ? "Green" : "Red";
+        }
     }
 
     private void InitializeComponent()

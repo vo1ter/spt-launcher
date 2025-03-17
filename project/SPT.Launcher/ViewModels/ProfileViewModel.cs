@@ -76,12 +76,6 @@ namespace SPT.Launcher.ViewModels
 
         private readonly ProcessMonitor _monitor;
 
-        public enum EDedicatedStatus
-        {
-            READY = 1,
-            IN_RAID = 2,
-        }
-
         public ProfileViewModel(IScreen Host) : base(Host)
         {
             // cache and load side image if profile has a side
@@ -100,8 +94,9 @@ namespace SPT.Launcher.ViewModels
 
             // Initialize dedicated server status
             FikaDedicatedData dediData = FikaController.GetDedicatedData();
-            DediAvailabilityText = dediData.Available == Models.Fika.EDedicatedStatus.READY ? "Available" : (dediData.Available == Models.Fika.EDedicatedStatus.IN_RAID ? "In Raid" : "Unavailable");
-            DediAvailabilityColor = dediData.Available == Models.Fika.EDedicatedStatus.READY ? "Green" : (dediData.Available == Models.Fika.EDedicatedStatus.IN_RAID ? "Orange" : "Red");
+            bool isDediAvailable = dediData.Available != null;
+            DediAvailabilityText = isDediAvailable ? "Available" : "Unavailable";
+            DediAvailabilityColor = isDediAvailable ? "Green" : "Red";
 
             // Initialize player count
             try
@@ -313,25 +308,37 @@ namespace SPT.Launcher.ViewModels
 
         public async Task UpdateOnlinePlayersCommand()
         {
-            FikaPlayer[] players = FikaController.GetOnlinePlayers();
+            // Fetch players once
+            FikaPlayer[] players = await Task.Run(() => FikaController.GetOnlinePlayers());
 
-            // Update the PlayersOnline property with the count
+            // Update the PlayersOnline property
             PlayersOnline = players.Length;
 
+            // Show notification
             if (players.Length == 0)
             {
                 SendNotification("Fika", "No players online");
-                return;
             }
-
-            SendNotification("Fika", $"{PlayersOnline} {(PlayersOnline == 1 ? "player" : "players")} online");
-
-            // Debug output for each player (optional)
-            foreach (var player in players)
+            else
             {
-                Debug.WriteLine(player.nickname);
+                SendNotification("Fika", $"{PlayersOnline} {(PlayersOnline == 1 ? "player" : "players")} online");
             }
+
+            // Update the OnlinePlayers control if it exists in the view
+            // and pass the already fetched players data to avoid duplicate API calls
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var onlinePlayersControl = Avalonia.VisualTree.VisualExtensions
+                    .FindDescendantOfType<SPT.Launcher.CustomControls.OnlinePlayers>(((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow);
+
+                if (onlinePlayersControl != null)
+                {
+                    return onlinePlayersControl.UpdatePlayersList(players);
+                }
+                return Task.CompletedTask;
+            });
         }
+
         private void UpdateProfileInfo()
         {
             AccountManager.UpdateProfileInfo();
@@ -342,6 +349,35 @@ namespace SPT.Launcher.ViewModels
                 SideImage.Path = ProfileInfo.SideImage;
                 SideImage.Touch();
             }
+        }
+
+        public async Task UpdateDedicatedStatusCommand()
+        {
+            // Fetch dedicated server status
+            FikaDedicatedData dediData = await Task.Run(() => FikaController.GetDedicatedData());
+            bool isDediAvailable = dediData.Available != null;
+
+            // Update the ViewModel properties
+            DediAvailabilityText = isDediAvailable ? "Available" : "Unavailable";
+            DediAvailabilityColor = isDediAvailable ? "Green" : "Red";
+
+            // Show notification
+            // SendNotification("Fika", $"Dedicated server status: {DediAvailabilityText}");
+
+            // Update the DedicatedStatus control if it exists in the view
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var dedicatedStatusControl = Avalonia.VisualTree.VisualExtensions
+                    .FindDescendantOfType<SPT.Launcher.CustomControls.DedicatedStatus>(
+                        ((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow);
+
+                if (dedicatedStatusControl != null)
+                {
+                    dedicatedStatusControl.DediAvailabilityText = DediAvailabilityText;
+                    dedicatedStatusControl.DediAvailabilityColor = DediAvailabilityColor;
+                }
+                return Task.CompletedTask;
+            });
         }
 
 
