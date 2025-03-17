@@ -5,13 +5,17 @@
              xmlns:helpers="using:SPT.Launcher.Helpers"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SPT.Launcher.CustomControls.DedicatedStatus">
-	<Border Classes="card">
-		<Grid VerticalAlignment="Center" RowDefinitions="Auto,*" Margin="20"
-			  Background="{DynamicResource BackgroundBrush}">
-			<StackPanel Orientation="Horizontal">
-				<Label>Dedicated Availability:</Label>
-				<Label TextElement.Foreground="{Binding $parent[UserControl].DediAvailabilityColor}" Content="{Binding $parent[UserControl].DediAvailabilityText}"/>
-			</StackPanel>
-		</Grid>
-	</Border>
+    <Border Classes="card">
+        <Grid VerticalAlignment="Center" RowDefinitions="Auto,*" Margin="20"
+              Background="{DynamicResource BackgroundBrush}">
+            <StackPanel Orientation="Horizontal">
+                <Label VerticalAlignment="Center">Dedicated Availability:</Label>
+                <Label TextElement.Foreground="{Binding $parent[UserControl].DediAvailabilityColor}" Content="{Binding $parent[UserControl].DediAvailabilityText}" VerticalAlignment="Center"/>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Classes="icon" Margin="10,0,0,0"
+                        Command="{Binding UpdateDedicatedStatusCommand}">
+                    <Path Data="{StaticResource Sync}" Fill="White" />
+                </Button>
+            </StackPanel>
+        </Grid>
+    </Border>
 </UserControl>

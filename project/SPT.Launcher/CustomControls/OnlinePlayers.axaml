@@ -6,22 +6,22 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="SPT.Launcher.CustomControls.OnlinePlayers">
     <Border Classes="card">
-            <Grid RowDefinitions="Auto,*" Margin="2"
-                  Background="{DynamicResource BackgroundBrush}">
-				<StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
-					<Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="{Binding Source={x:Static helpers:LocalizationProvider.Instance}, Path=players_online}" />
-				</StackPanel>
-				<StackPanel>
-					<Button HorizontalAlignment="Right" VerticalAlignment="Center" Classes="icon"
-                        Command="{Binding $parent[UserControl].UpdateOnlinePlayersCommand}">
-						<Path Data="{StaticResource Sync}" Fill="White" />
-					</Button>
-				</StackPanel>
-					<ScrollViewer Grid.Row="1" Height="200">
-						<StackPanel x:Name="onlinePlayersList">
-							
-						</StackPanel>
-					</ScrollViewer>
-            </Grid>
-        </Border>
+        <Grid RowDefinitions="Auto,*" Margin="2"
+              Background="{DynamicResource BackgroundBrush}">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Label HorizontalAlignment="Center" VerticalAlignment="Center" Content="{Binding PlayersOnline, StringFormat='{}{0} online'}" />
+            </StackPanel>
+            <StackPanel>
+                <Button HorizontalAlignment="Right" VerticalAlignment="Center" Classes="icon"
+                    Command="{Binding UpdateOnlinePlayersCommand}">
+                    <Path Data="{StaticResource Sync}" Fill="White" />
+                </Button>
+            </StackPanel>
+            <ScrollViewer Grid.Row="1" Height="200">
+                <StackPanel x:Name="onlinePlayersList">
+                    
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+    </Border>
 </UserControl>

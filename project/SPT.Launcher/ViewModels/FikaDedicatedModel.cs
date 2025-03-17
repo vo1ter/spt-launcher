@@ -24,8 +24,6 @@ namespace MyApp
         {
             DediStatus = "test";
             DediAvailability = "test2";
-
-            
         }
     }
 }

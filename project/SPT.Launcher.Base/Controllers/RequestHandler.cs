@@ -111,7 +111,7 @@ namespace SPT.Launcher
 
         public static string RequestDedicatedClientStatus()
         {
-            return request.GetJson("/fika/raid/dedicated/getstatus");
+            return request.GetJson("/fika/headless/available");
         }
     }
 }

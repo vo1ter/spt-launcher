@@ -15,6 +15,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using SPT.Launcher.Models.SPT;
 using System.Linq;
 using SPT.Launcher.Models.Fika;
+using Splat.ModeDetection;
 
 namespace SPT.Launcher.ViewModels
 {
@@ -78,7 +79,7 @@ namespace SPT.Launcher.ViewModels
         public ProfileViewModel(IScreen Host) : base(Host)
         {
             // cache and load side image if profile has a side
-            if(AccountManager.SelectedProfileInfo != null && AccountManager.SelectedProfileInfo.Side != null)
+            if (AccountManager.SelectedProfileInfo != null && AccountManager.SelectedProfileInfo.Side != null)
             {
                 ImageRequest.CacheSideImage(AccountManager.SelectedProfileInfo.Side);
                 SideImage.Path = AccountManager.SelectedProfileInfo.SideImage;
@@ -91,10 +92,21 @@ namespace SPT.Launcher.ViewModels
 
             CurrentId = AccountManager.SelectedAccount.id;
 
+            // Initialize dedicated server status
             FikaDedicatedData dediData = FikaController.GetDedicatedData();
-            bool dediAvailability = dediData.Available ;
-            DediAvailabilityText = dediAvailability ? "Available" : "Not available";
-            DediAvailabilityColor = dediAvailability ? "Green" : "Red";
+            bool isDediAvailable = dediData.Available != null;
+            DediAvailabilityText = isDediAvailable ? "Available" : "Unavailable";
+            DediAvailabilityColor = isDediAvailable ? "Green" : "Red";
+
+            // Initialize player count
+            try
+            {
+                PlayersOnline = FikaController.GetOnlinePlayers().Length;
+            }
+            catch
+            {
+                PlayersOnline = 0;
+            }
         }
 
         private async Task GameVersionCheck()
@@ -111,9 +123,7 @@ namespace SPT.Launcher.ViewModels
             // if the compatible version isn't the same as the game version show a warning dialog
             if(compatibleGameVersion != gameVersion)
             {
-                WarningDialogViewModel warning = new WarningDialogViewModel(null,
-                                                     string.Format(LocalizationProvider.Instance.game_version_mismatch_format_2, gameVersion, compatibleGameVersion),
-                                                     LocalizationProvider.Instance.i_understand);
+                WarningDialogViewModel warning = new WarningDialogViewModel(null, string.Format(LocalizationProvider.Instance.game_version_mismatch_format_2, gameVersion, compatibleGameVersion), LocalizationProvider.Instance.i_understand);
                 Dispatcher.UIThread.InvokeAsync(async() =>
                 {
                     await ShowDialog(warning);
@@ -298,19 +308,37 @@ namespace SPT.Launcher.ViewModels
 
         public async Task UpdateOnlinePlayersCommand()
         {
-            FikaPlayer[] players = FikaController.GetOnlinePlayers();
+            // Fetch players once
+            FikaPlayer[] players = await Task.Run(() => FikaController.GetOnlinePlayers());
 
-            if (players.Count() == 0)
+            // Update the PlayersOnline property
+            PlayersOnline = players.Length;
+
+            // Show notification
+            if (players.Length == 0)
             {
                 SendNotification("Fika", "No players online");
-                return;
+            }
+            else
+            {
+                SendNotification("Fika", $"{PlayersOnline} {(PlayersOnline == 1 ? "player" : "players")} online");
             }
 
-            foreach (var player in players)
+            // Update the OnlinePlayers control if it exists in the view
+            // and pass the already fetched players data to avoid duplicate API calls
+            await Dispatcher.UIThread.InvokeAsync(() =>
             {
-                Debug.WriteLine(player.nickname);
-            }
+                var onlinePlayersControl = Avalonia.VisualTree.VisualExtensions
+                    .FindDescendantOfType<SPT.Launcher.CustomControls.OnlinePlayers>(((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow);
+
+                if (onlinePlayersControl != null)
+                {
+                    return onlinePlayersControl.UpdatePlayersList(players);
+                }
+                return Task.CompletedTask;
+            });
         }
+
         private void UpdateProfileInfo()
         {
             AccountManager.UpdateProfileInfo();
@@ -321,6 +349,35 @@ namespace SPT.Launcher.ViewModels
                 SideImage.Path = ProfileInfo.SideImage;
                 SideImage.Touch();
             }
+        }
+
+        public async Task UpdateDedicatedStatusCommand()
+        {
+            // Fetch dedicated server status
+            FikaDedicatedData dediData = await Task.Run(() => FikaController.GetDedicatedData());
+            bool isDediAvailable = dediData.Available != null;
+
+            // Update the ViewModel properties
+            DediAvailabilityText = isDediAvailable ? "Available" : "Unavailable";
+            DediAvailabilityColor = isDediAvailable ? "Green" : "Red";
+
+            // Show notification
+            // SendNotification("Fika", $"Dedicated server status: {DediAvailabilityText}");
+
+            // Update the DedicatedStatus control if it exists in the view
+            await Dispatcher.UIThread.InvokeAsync(() =>
+            {
+                var dedicatedStatusControl = Avalonia.VisualTree.VisualExtensions
+                    .FindDescendantOfType<SPT.Launcher.CustomControls.DedicatedStatus>(
+                        ((IClassicDesktopStyleApplicationLifetime)Application.Current.ApplicationLifetime).MainWindow);
+
+                if (dedicatedStatusControl != null)
+                {
+                    dedicatedStatusControl.DediAvailabilityText = DediAvailabilityText;
+                    dedicatedStatusControl.DediAvailabilityColor = DediAvailabilityColor;
+                }
+                return Task.CompletedTask;
+            });
         }
 
 
